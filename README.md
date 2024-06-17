@@ -45,3 +45,45 @@ To add a product, select a category and click the `➕ Add Product` button. Then
 To ask the admin a question, simply select the `/sos` command. There is a limit on the number of questions.
 
 ![sos](data/assets/7.png)
+
+## Get started
+
+1. Clone this repository.
+
+2. Create and activate virtual enviroment:
+
+Windows:
+```powershell
+python -m venv venv
+& venv/scripts/activate.ps1
+```
+
+UNIX:
+```bash
+python3 -m venv venv
+source venv/scripts/activate
+```
+
+3. Install the requirements:
+
+```bash
+pip install -r requirements.txt
+```
+
+4. Create and populate `.env` file in the root directory. Here are the required keys:
+
+| Key       | Value                                                          |
+| --------- | -------------------------------------------------------------- |
+| BOT_TOKEN | To get bot token, you need create a bot via [BotFather](https://t.me/BotFather/). |
+
+Example:
+
+```properties
+BOT_TOKEN=YOUR_BOT_TOKEN
+```
+
+5. Run `app.py`:
+
+```bash
+python3 app.py
+```
