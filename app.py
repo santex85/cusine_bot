@@ -75,7 +75,7 @@ async def on_shutdown():
 
 if __name__ == '__main__':
 
-    if "HEROKU" in list(os.environ.keys()):
+    if "HEROKU" or "RAILWAY" in list(os.environ.keys()):
 
         executor.start_webhook(
             dispatcher=dp,
