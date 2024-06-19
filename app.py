@@ -62,7 +62,8 @@ async def on_startup(dp):
     db.create_tables()
 
     await bot.delete_webhook()
-    await bot.set_webhook(config.WEBHOOK_URL)
+    if config.WEBHOOK_URL:
+        await bot.set_webhook(config.WEBHOOK_URL)
 
 
 async def on_shutdown():
@@ -75,7 +76,8 @@ async def on_shutdown():
 
 if __name__ == '__main__':
 
-    if "HEROKU" in list(os.environ.keys()):
+    if (("HEROKU_APP_NAME" in list(os.environ.keys())) or
+        ("RAILWAY_PUBLIC_DOMAIN" in list(os.environ.keys()))):
 
         executor.start_webhook(
             dispatcher=dp,
