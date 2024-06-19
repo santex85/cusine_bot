@@ -70,11 +70,14 @@ source venv/scripts/activate
 pip install -r requirements.txt
 ```
 
-4. Create and populate `.env` file in the root directory. Here are the required keys:
+4. Create and populate `.env` file in the root directory. Here are the required keys (_\*_ - always required; _\*\*_ - required only in production):
 
-| Key       | Value                                                          |
-| --------- | -------------------------------------------------------------- |
-| BOT_TOKEN | To get bot token, you need create a bot via [BotFather](https://t.me/BotFather/). |
+| Key                                 | Value                                                                                                                                       |
+| ----------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
+| BOT_TOKEN (_\*_)                    | To get bot token, you need create a bot via [BotFather](https://t.me/BotFather/).                                                           |
+| PROJECT_NAME (_\*\*_)               | Name of your project on Heroku (required if you want to deploy bot on Heroku).                                                              |
+| WEBHOOK_HOST, WEBHOOK_PATH (_\*\*_) | Webhook host and path.                                                                                                                      |
+| ADMINS (_\*\*_)                     | A comma-separated string of admins IDs (e.g., 000000000,123456789). To get your Telegram ID, use [Get My ID bot](https://t.me/getmyid_bot). |
 
 Example:
 
