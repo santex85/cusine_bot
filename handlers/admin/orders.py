@@ -45,9 +45,9 @@ async def order_answer(message: Message, orders_data: list, product_dict: dict):
         try:
             order_id, cid, usr_name, usr_address, products_string, order_status = order
 
-            res = f'Заказ №<b>{order_id}</b>'
-            res += f'Клиент: {usr_name if usr_name is not None else "Не указан"} (<a href="tg://user?id={cid}">{cid if cid is not None else "Не указан"}</a>)'
-            res += f'Адрес: {usr_address if usr_address is not None else "Не указан"}'
+            res = f'Заказ №<b>{order_id}</b> \n'
+            res += f'Клиент: {usr_name if usr_name is not None else "Не указан"} (<a href="tg://user?id={cid}">{cid if cid is not None else "Не указан"}</a>)\n'
+            res += f'Адрес: {usr_address if usr_address is not None else "Не указан"}\n'
 
             total_order_price = 0
 
@@ -70,7 +70,7 @@ async def order_answer(message: Message, orders_data: list, product_dict: dict):
                             product_price = product_info.get('price', 0)
 
                             position_total = quantity * product_price
-                            res += f'  • {product_name}: {quantity} шт. по {product_price} руб. (всего: {position_total} руб.)'
+                            res += f'  \n• {product_name}: {quantity} шт. по {product_price} руб. (всего: {position_total} руб.)'
                             total_order_price += position_total
 
                         except (ValueError, IndexError) as e:

@@ -2,6 +2,7 @@ import logging
 from data import config
 from aiogram.dispatcher import FSMContext
 from aiogram.types import Message, CallbackQuery, ReplyKeyboardMarkup, ReplyKeyboardRemove, InlineKeyboardMarkup, InlineKeyboardButton
+from aiogram.utils.exceptions import MessageNotModified
 from keyboards.inline.products_from_cart import product_markup, product_cb
 from aiogram.utils.callback_data import CallbackData
 from keyboards.default.markups import *
@@ -112,8 +113,10 @@ async def product_callback_handler(query: CallbackQuery, callback_data: dict, st
                     db.query('''UPDATE cart 
                     SET quantity = ? 
                     WHERE cid = ? AND idx = ?''', (count_in_cart, query.message.chat.id, idx))
-
-                    await query.message.edit_reply_markup(product_markup(idx, count_in_cart))
+                    try:
+                        await query.message.edit_reply_markup(product_markup(idx, count_in_cart))
+                    except MessageNotModified:
+                        pass
 
 
 # Обработчик для кнопки '📦 Оформить заказ' - срабатывает только в состоянии USER

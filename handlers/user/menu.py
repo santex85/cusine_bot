@@ -9,7 +9,7 @@ delivery_status = '🚚 Статус заказа'
 
 @dp.message_handler(commands='menu', state=UserModeState.USER)
 async def user_menu(message: Message, state: FSMContext):
-    markup = ReplyKeyboardMarkup(selective=True)
+    markup = ReplyKeyboardMarkup(selective=True, resize_keyboard=True)
     markup.add(catalog)
     markup.add(cart)
     markup.add(delivery_status)
