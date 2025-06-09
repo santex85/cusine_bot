@@ -17,7 +17,7 @@ from handlers.admin.menu import admin_menu
 filters.setup(dp)
 
 WEBAPP_HOST = "0.0.0.0"
-WEBAPP_PORT = int(os.environ.get("PORT", 5000))
+WEBAPP_PORT = int(os.environ.get("PORT", 8080))
 
 @dp.message_handler(commands='start', state='*')
 async def cmd_start(message: types.Message, state: FSMContext):
@@ -46,7 +46,9 @@ async def on_shutdown():
 
 
 if __name__ == '__main__':
-    if "HEROKU_APP_NAME" in os.environ or "RAILWAY_PUBLIC_DOMAIN" in os.environ:
+    # Проверяем, запущено ли приложение в облачной среде Google Cloud (Firebase)
+    if os.environ.get("K_SERVICE"):
+        print("Starting in webhook mode...")
         executor.start_webhook(
             dispatcher=dp,
             webhook_path=config.WEBHOOK_PATH,
@@ -57,4 +59,5 @@ if __name__ == '__main__':
             port=WEBAPP_PORT,
         )
     else:
+        print("Starting in polling mode...")
         executor.start_polling(dp, on_startup=on_startup, skip_updates=False)
