@@ -1,0 +1,8 @@
+steps:
+  # Шаг 1: Сборка Docker-образа
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['build', '-t', 'gcr.io/$PROJECT_ID/shop-bot:$COMMIT_SHA', '.']
+
+# Указываем, какой образ нужно сохранить после сборки
+images:
+  - 'gcr.io/$PROJECT_ID/shop-bot:$COMMIT_SHA'
