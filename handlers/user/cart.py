@@ -8,11 +8,10 @@ from keyboards.default.markups import *
 from aiogram.types.chat import ChatActions
 from states import CheckoutState
 from loader import dp, db, bot
-# Удален import IsUser
-from .menu import cart
-from handlers.admin.notifications import send_new_order_notification # Добавлен импорт новой функции
-from data.config import ADMINS # Изменен импорт на ADMINS
-from states.user_mode_state import UserModeState # Добавлен импорт UserModeState
+from .menu import user_menu, cart
+from handlers.admin.notifications import send_new_order_notification
+from data.config import ADMINS
+from states.user_mode_state import UserModeState
 
 
 # Обработчик для кнопки '🛒 Корзина' - срабатывает только в состоянии USER
@@ -147,11 +146,11 @@ async def process_check_cart_invalid(message: Message, state: FSMContext): # Д�
     await message.reply('Такого варианта не было.')
 
 
-# Обработчик для кнопки back на этапе check_cart - срабатывает только в состоянии check_cart
+# Обработчик для кнопки back на этапе check_cart - срабаты
+# После выхода из состояний CheckoutState, пользователь должен вернуться в основное состояние USER
 @dp.message_handler(text=back_message, state=CheckoutState.check_cart)
 async def process_check_cart_back(message: Message, state: FSMContext):
     await state.finish()
-    # После выхода из состояний CheckoutState, пользователь должен вернуться в основное состояние USER
     await UserModeState.USER.set()
     await process_cart(message, state)
 
@@ -226,7 +225,7 @@ async def process_confirm_invalid(message: Message, state: FSMContext): # Доб
     await message.reply('Такого варианта не было.')
 
 
-# Обработчик для кнопки back на этапе confirm - срабатыatолько в состоянии confirm
+# Обработчик для кнопки back на этапе confirm - срабатывает только в состоянии confirm
 @dp.message_handler(text=back_message, state=CheckoutState.confirm)
 async def process_confirm_back(message: Message, state: FSMContext): # Переименован для уникальности
 
@@ -241,41 +240,27 @@ async def process_confirm_back(message: Message, state: FSMContext): # Пере�
 @dp.message_handler(text=confirm_message, state=CheckoutState.confirm)
 async def process_confirm(message: Message, state: FSMContext):
 
-    enough_money = True  # enough money on the balance sheet
-    markup = ReplyKeyboardRemove()
-
+    enough_money = True
     if enough_money:
-
         logging.info('Deal was made.')
-
         async with state.proxy() as data:
-
             cid = message.chat.id
             products = [idx + '=' + str(quantity)
                         for idx, quantity in db.fetchall('''SELECT idx, quantity FROM cart
-            WHERE cid=?''', (cid,))]  # idx=quantity
-
-            # Явно указываем столбцы и добавляем значение для status
+            WHERE cid=?''', (cid,))]
             db.query('INSERT INTO orders (cid, usr_name, usr_address, products, status) VALUES (?, ?, ?, ?, ?)',
-                    (cid, data['name'], data['address'], ' '.join(products), 'новый')) # Добавляем 'новый' как значение для status
-
-            # Получаем ID нового заказа
+                     (cid, data['name'], data['address'], ' '.join(products), 'новый'))
             order_id = db.get_last_row_id()
-
-            # --- Отправляем сообщение администратору с помощью новой функции ---
-            # Используем список ADMINS из data/config.py
             await send_new_order_notification(bot, ADMINS, order_id, cid, data['name'], data['address'], products)
-            # -----------------------------------------------------------------
-
             db.query('DELETE FROM cart WHERE cid=?', (cid,))
-
-            await message.answer('Ок! Ваш заказ уже в пути 🚀Имя: <b>' + data['name'] + '</b>Адрес: <b>' + data['address'] + '</b>',
-                                 reply_markup=markup)
+            await message.answer(f"""Ок! Ваш заказ уже в пути 🚀
+Имя: <b>{data["name"]}</b>
+Адрес: <b>{data["address"]}</b>""",
+                                 reply_markup=ReplyKeyboardRemove())
     else:
-
         await message.answer('У вас недостаточно денег на счете. Пополните баланс!',
-                             reply_markup=markup)
+                             reply_markup=ReplyKeyboardRemove())
 
     await state.finish()
-    # После завершения оформления заказа, пользователь должен вернуться в основное состояние USER
     await UserModeState.USER.set()
+    await user_menu(message, state)

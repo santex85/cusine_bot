@@ -4,7 +4,6 @@ from loader import dp
 from states.user_mode_state import UserModeState
 
 catalog = '🛍️ Каталог'
-balance = '💰 Баланс'
 cart = '🛒 Корзина'
 delivery_status = '🚚 Статус заказа'
 
@@ -12,7 +11,7 @@ delivery_status = '🚚 Статус заказа'
 async def user_menu(message: Message, state: FSMContext):
     markup = ReplyKeyboardMarkup(selective=True)
     markup.add(catalog)
-    markup.add(balance, cart)
+    markup.add(cart)
     markup.add(delivery_status)
 
     await message.answer('Меню пользователя', reply_markup=markup)
