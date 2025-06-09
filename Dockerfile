@@ -1,9 +1,20 @@
-FROM python:3.7-slim
+# Используем более современный и безопасный образ Python
+FROM python:3.11.10-slim
 
-WORKDIR /botname
+# Устанавливаем рабочую директорию
+WORKDIR /app
 
-COPY requirements.txt /botname/
-RUN pip install -r /botname/requirements.txt
-COPY . /botname/
+# Обновляем pip и устанавливаем зависимости
+COPY requirements.txt .
+RUN pip install --no-cache-dir --upgrade pip && \
+    pip install --no-cache-dir -r requirements.txt
 
-CMD python3 /botname/app.py
+# Копируем остальную часть приложения
+COPY . .
+
+# Создаем пользователя без прав root для безопасности
+RUN useradd --create-home appuser
+USER appuser
+
+# Запускаем приложение
+CMD ["python", "app.py"]
