@@ -1,0 +1,9 @@
+{
+  "name": "shop-bot-python-backend",
+  "version": "1.0.0",
+  "description": "This is a Python project. This file is here to satisfy the Firebase App Hosting build process.",
+  "main": "app.py",
+  "scripts": {
+    "start": "python app.py"
+  }
+}
