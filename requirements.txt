@@ -1,2 +1,4 @@
 aiogram==2.9.2
 python-dotenv==1.0.1
+gunicorn==22.0.0
+uvicorn==0.30.1

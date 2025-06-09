@@ -1,5 +1,6 @@
 import os
 from dotenv import load_dotenv
+from aiohttp import web
 
 load_dotenv()
 
@@ -32,23 +33,24 @@ async def cmd_start(message: types.Message, state: FSMContext):
 async def on_startup(dp):
     logging.basicConfig(level=logging.INFO)
     db.create_tables()
-    # Установка вебхука. URL берется из конфига.
-    # Если WEBHOOK_URL пустой, aiogram использует относительный путь, 
-    # что идеально для Firebase App Hosting.
     await bot.set_webhook(url=config.WEBHOOK_URL)
 
 async def on_shutdown():
     logging.warning("Shutting down..")
-    # Удаляем вебхук при остановке, чтобы не оставалось "мусора"
     await bot.delete_webhook()
     await dp.storage.close()
     await dp.storage.wait_closed()
     logging.warning("Bot down")
+    
+async def health_check(request):
+    return web.Response(text="OK")
 
 if __name__ == '__main__':
-    # Проверяем, запущено ли приложение в облачной среде (Firebase/Google Cloud)
     if os.environ.get("K_SERVICE"):
         print("Starting in webhook mode...")
+        app = executor.get_app()
+        app.router.add_get('/health', health_check)
+        
         executor.start_webhook(
             dispatcher=dp,
             webhook_path=config.WEBHOOK_PATH,
@@ -57,6 +59,7 @@ if __name__ == '__main__':
             skip_updates=True,
             host=WEBAPP_HOST,
             port=WEBAPP_PORT,
+            app=app,
         )
     else:
         print("Starting in polling mode...")

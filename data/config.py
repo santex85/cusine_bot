@@ -19,31 +19,11 @@ BOT_TOKEN = os.getenv("BOT_TOKEN")
 WEBHOOK_URL = None
 WEBHOOK_PATH = f"/webhook/{BOT_TOKEN}"
 
-# Проверяем, запущено ли приложение в среде Google Cloud (Firebase)
-if os.environ.get("K_SERVICE"):
-    # Формируем URL на основе стандартных переменных Google Cloud
-    # https://<service-name>-<project-hash>-<region>.a.run.app
-    # Google Cloud предоставляет SERVICE_URL, но для надежности соберем его сами, если его нет
-    service_url = os.environ.get("SERVICE_URL") # Переменная, которую может предоставлять App Hosting
-    if service_url:
-        WEBHOOK_URL = f"{service_url}{WEBHOOK_PATH}"
-    else:
-        # Если SERVICE_URL не предоставлен, пытаемся собрать его вручную
-        project_id = os.environ.get("GOOGLE_CLOUD_PROJECT")
-        region = os.environ.get("REGION", "us-central1") # us-central1 - регион по умолчанию
-        service_name = os.environ.get("K_SERVICE")
-        if project_id and service_name:
-             # Это более сложный, но надежный способ, если стандартные URL не работают
-             # Однако, для Firebase App Hosting обычно достаточно простого относительного пути
-             # Для простоты и надежности будем полагаться на относительный путь,
-             # так как Firebase App Hosting сам знает свой домен.
-             # Поэтому мы просто устанавливаем WEBHOOK_PATH, а URL оставляем пустым,
-             # чтобы aiogram использовал относительный путь.
-             WEBHOOK_URL = "" # Пустой URL заставит aiogram использовать относительный путь
-        
-# Для локальной разработки, если нужно (например, через ngrok)
-# else:
-#     WEBHOOK_URL = "https://your-ngrok-url.ngrok.io"
+# Проверяем, запущено ли приложение в облачной среде (Firebase/Google Cloud)
+# Переменная SERVICE_URL предоставляется хостингом
+service_url = os.environ.get("SERVICE_URL")
+if service_url:
+    WEBHOOK_URL = f"{service_url.rstrip('/')}{WEBHOOK_PATH}"
 
 print("--- Configuration ---")
 print(f"ADMINS: {ADMINS}")
