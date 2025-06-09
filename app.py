@@ -45,22 +45,10 @@ async def on_shutdown():
 async def health_check(request):
     return web.Response(text="OK")
 
+app = executor.get_app()
+app.router.add_get('/health', health_check)
+
 if __name__ == '__main__':
-    if os.environ.get("K_SERVICE"):
-        print("Starting in webhook mode...")
-        app = executor.get_app()
-        app.router.add_get('/health', health_check)
-        
-        executor.start_webhook(
-            dispatcher=dp,
-            webhook_path=config.WEBHOOK_PATH,
-            on_startup=on_startup,
-            on_shutdown=on_shutdown,
-            skip_updates=True,
-            host=WEBAPP_HOST,
-            port=WEBAPP_PORT,
-            app=app,
-        )
-    else:
-        print("Starting in polling mode...")
-        executor.start_polling(dp, on_startup=on_startup, skip_updates=False)
+    # Эта часть будет выполняться только при локальном запуске
+    logging.basicConfig(level=logging.INFO)
+    executor.start_polling(dp, on_startup=on_startup, skip_updates=False)
