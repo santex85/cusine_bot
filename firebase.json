@@ -1,10 +1,19 @@
 {
   "hosting": {
-    "public": "",
+    "public": "public",
     "ignore": [
       "firebase.json",
       "**/.*",
       "**/node_modules/**"
+    ],
+    "rewrites": [
+      {
+        "source": "**",
+        "run": {
+          "serviceId": "shop-bot",
+          "region": "us-central1"
+        }
+      }
     ]
   }
 }
