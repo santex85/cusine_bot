@@ -32,21 +32,21 @@ async def cmd_start(message: types.Message, state: FSMContext):
 async def on_startup(dp):
     logging.basicConfig(level=logging.INFO)
     db.create_tables()
-    await bot.delete_webhook()
-    if config.WEBHOOK_URL:
-        await bot.set_webhook(config.WEBHOOK_URL)
-
+    # Установка вебхука. URL берется из конфига.
+    # Если WEBHOOK_URL пустой, aiogram использует относительный путь, 
+    # что идеально для Firebase App Hosting.
+    await bot.set_webhook(url=config.WEBHOOK_URL)
 
 async def on_shutdown():
     logging.warning("Shutting down..")
+    # Удаляем вебхук при остановке, чтобы не оставалось "мусора"
     await bot.delete_webhook()
     await dp.storage.close()
     await dp.storage.wait_closed()
     logging.warning("Bot down")
 
-
 if __name__ == '__main__':
-    # Проверяем, запущено ли приложение в облачной среде Google Cloud (Firebase)
+    # Проверяем, запущено ли приложение в облачной среде (Firebase/Google Cloud)
     if os.environ.get("K_SERVICE"):
         print("Starting in webhook mode...")
         executor.start_webhook(
