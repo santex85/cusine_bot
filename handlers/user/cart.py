@@ -226,7 +226,7 @@ async def process_confirm_invalid(message: Message, state: FSMContext): # Доб
     await message.reply('Такого варианта не было.')
 
 
-# Обработчик для кнопки back на этапе confirm - срабатывает только в состоянии confirm
+# Обработчик для кнопки back на этапе confirm - срабатыatолько в состоянии confirm
 @dp.message_handler(text=back_message, state=CheckoutState.confirm)
 async def process_confirm_back(message: Message, state: FSMContext): # Переименован для уникальности
 
@@ -256,11 +256,11 @@ async def process_confirm(message: Message, state: FSMContext):
             WHERE cid=?''', (cid,))]  # idx=quantity
 
             # Явно указываем столбцы и добавляем значение для status
-            cursor = db.query('INSERT INTO orders (cid, usr_name, usr_address, products, status) VALUES (?, ?, ?, ?, ?)',
+            db.query('INSERT INTO orders (cid, usr_name, usr_address, products, status) VALUES (?, ?, ?, ?, ?)',
                     (cid, data['name'], data['address'], ' '.join(products), 'новый')) # Добавляем 'новый' как значение для status
 
-            # Получаем ID нового заказа из курсора
-            order_id = cursor.lastrowid
+            # Получаем ID нового заказа
+            order_id = db.get_last_row_id()
 
             # --- Отправляем сообщение администратору с помощью новой функции ---
             # Используем список ADMINS из data/config.py
