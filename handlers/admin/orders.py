@@ -3,7 +3,7 @@ import logging
 from aiogram.types import Message
 from aiogram import types
 from loader import dp, db
-from handlers.user.menu import orders as orders_text
+from handlers.admin.menu import orders as orders_text
 # Удален import IsAdmin
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 from aiogram.dispatcher import FSMContext # Добавлен импорт FSMContext

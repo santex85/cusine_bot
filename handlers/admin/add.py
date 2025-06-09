@@ -4,7 +4,7 @@ from aiogram.utils.callback_data import CallbackData
 from keyboards.default.markups import *
 from states import ProductState, CategoryState
 from aiogram.types.chat import ChatActions
-from handlers.user.menu import settings
+from handlers.admin.menu import settings
 from loader import dp, db, bot
 # Удален import IsAdmin
 from hashlib import md5
@@ -253,7 +253,7 @@ async def process_confirm_invalid(message: Message, state: FSMContext):
     await message.answer('Такого варианта не было.')
 
 
-# Обработчик кнопки назад на этапе подтверждения - срабатывает только в состоянии ProductState.confirm
+# Обработчик кнопки назад на этапе подтверждения - срабаты
 # Не требует дополнительного фильтра по UserModeState
 @dp.message_handler(text=back_message, state=ProductState.confirm)
 async def process_confirm_back(message: Message, state: FSMContext):

@@ -1,4 +1,4 @@
-from handlers.user.menu import questions
+from handlers.admin.menu import questions
 from aiogram.dispatcher import FSMContext
 from aiogram.utils.callback_data import CallbackData
 from keyboards.default.markups import all_right_message, cancel_message, submit_markup
@@ -67,7 +67,7 @@ async def process_send_answer_cancel(message: Message, state: FSMContext): # П�
     await UserModeState.ADMIN.set()
 
 
-# Обработчик кнопки подтверждения на этапе submit - срабатывает только в состоянии AnswerState.submit
+# Обработчик кнопки подтверждения на этапе submit - срабаты- срабатывает только в состоянии AnswerState.submit
 # Не требует дополнительного фильтра по UserModeState
 @dp.message_handler(text=all_right_message, state=AnswerState.submit)
 async def process_send_answer_confirm(message: Message, state: FSMContext): # Переименован для уникальности
