@@ -4,6 +4,15 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
+ADMINS_STR = os.getenv("ADMINS", "")
+print(f"ADMINS_STR from env: {ADMINS_STR}")
+try:
+    ADMINS = list(map(int, ADMINS_STR.split(",")))
+    print(f"ADMINS list: {ADMINS}")
+except ValueError as e:
+    print(f"Error converting ADMINS to int: {e}. ADMINS_STR was: {ADMINS_STR}")
+
+
 BOT_TOKEN = os.getenv("BOT_TOKEN")
 
 PROJECT_NAME = os.getenv("PROJECT_NAME")

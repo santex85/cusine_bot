@@ -1,95 +1,75 @@
-<p align="center">
-  <a href="https://t.me/example_store_bot"><img src="data/assets/logo.png" alt="ShopBot"></a>
-</p>
 
-This is an example Telegram shop bot. It's a simple and, most importantly, efficient way to place an order without leaving your favorite messenger.
+# Telegram Shop Bot
 
-## What can it do?
+Это Telegram-бот для интернет-магазина, написанный на Python с использованием библиотеки aiogram.
 
-1. `/start` - needed to start the bot and choose the mode (user/admin).
+## О проекте
 
-2. `/menu` - go to the menu.
+Бот предоставляет функционал как для пользователей (просмотр каталога, добавление товаров в корзину, оформление заказов), так и для администраторов (управление каталогом, просмотр заказов, ответы на вопросы пользователей).
 
-3. `/sos` - ask the administrator a question.
+**Основные возможности:**
+*   **Для пользователей:**
+    *   Просмотр каталога товаров по категориям.
+    *   Корзина для управления выбранными товарами.
+    *   Оформление заказа с указанием имени и адреса.
+    *   Просмотр статуса своих заказов.
+    *   Функция SOS для отправки вопроса администратору.
+*   **Для администраторов:**
+    *   Добавление и удаление категорий товаров.
+    *   Добавление и удаление товаров в категориях.
+    *   Просмотр всех поступающих заказов.
+    *   Ответы на вопросы пользователей.
+    *   Уведомления о новых заказах.
 
-## Menu
+## Настройка
 
-The user menu looks like this:
+1.  **Клонируйте репозиторий:**
+    ```bash
+    git clone <URL_вашего_репозитория>
+    cd <название_папки_репозитория>
+    ```
 
-![User Menu](data/assets/4.png)
+2.  **Создайте и активируйте виртуальное окружение:**
+    ```bash
+    python -m venv venv
+    source venv/bin/activate  # Для Windows: venv\Scripts\activate
+    ```
 
-## Catalog
+3.  **Установите зависимости:**
+    ```bash
+    pip install -r requirements.txt
+    ```
 
-The catalog consists of products sorted by categories. Users can add items to their cart, and the admin has full control over catalog management (addition/removal).
+4.  **Настройте переменные окружения:**
+    Создайте файл `.env` в корневой директории проекта и добавьте в него следующие переменные:
 
-## Cart
+    ```dotenv
+    # Токен вашего Telegram-бота, полученный от @BotFather
+    BOT_TOKEN="ВАШ_БОТ_ТОКЕН"
 
-The ordering process looks like this: the user goes to the `🛍️ Catalog`, selects the desired category, chooses products, and clicks the `🛒 Cart` button.
+    # Список ID администраторов, разделенных запятыми
+    # Пример: ADMINS="123456789,987654321"
+    ADMINS="ВАШ_ТЕЛЕГРАМ_ID"
 
-![cart](data/assets/5.png)
+    # URL для вебхуков (если используется)
+    # Пример: WEBHOOK_URL="https://your-app-name.herokuapp.com"
+    WEBHOOK_URL=""
+    ```
 
----
+    Чтобы узнать свой Telegram ID, вы можете воспользоваться ботом, например, `@userinfobot`.
 
-Then, after making sure everything is in place, proceed to checkout by clicking `📦 Place Order`.
+## Запуск
 
-![checkout](data/assets/6.png)
-
-## Add a Product
-
-To add a product, select a category and click the `➕ Add Product` button. Then, fill out the "name-description-image-price" form and confirm.
-
-![add_product](data/assets/1.png)
-
-## Contacting Administration
-
-To ask the admin a question, simply select the `/sos` command. There is a limit on the number of questions.
-
-![sos](data/assets/7.png)
-
-## Get started
-
-1. Clone this repository.
-
-2. Create and activate virtual enviroment:
-
-Windows:
-
-```powershell
-python -m venv venv
-& venv/scripts/activate.ps1
-```
-
-UNIX:
-
-```bash
-python3 -m venv venv
-source venv/scripts/activate
-```
-
-3. Install the requirements:
+После выполнения всех шагов по настройке, запустите бота командой:
 
 ```bash
-pip install -r requirements.txt
+python app.py
 ```
 
-4. Create and populate `.env` file in the root directory. Here are the required keys (_\*_ - always required; _\*\*_ - required only in production):
+Бот начнет работать в режиме поллинга. Если вы настроили `WEBHOOK_URL`, он будет использовать вебхуки.
 
-| Key                                  | Value                                                                                                                                       |
-| ------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------- |
-| BOT*TOKEN (*\*\_)                    | To get bot token, you need create a bot via [BotFather](https://t.me/BotFather/).                                                           |
-| PROJECT*NAME (*\*\*\_)               | Name of your project on Heroku (required if you want to deploy bot on Heroku).                                                              |
-| WEBHOOK*HOST, WEBHOOK_PATH (*\*\*\_) | Webhook host and path.                                                                                                                      |
-| ADMINS (_\*\*_)                      | A comma-separated string of admins IDs (e.g., 000000000,123456789). To get your Telegram ID, use [Get My ID bot](https://t.me/getmyid_bot). |
+## Переменные окружения
 
-Example:
-
-```properties
-BOT_TOKEN=YOUR_BOT_TOKEN
-ADMINS=123456789,000000000
-```
-
-5. Run `app.py`:
-
-```bash
-python3 app.py
-```
+*   `BOT_TOKEN` (обязательно): Токен вашего Telegram-бота.
+*   `ADMINS` (обязательно): Список ID администраторов через запятую. Хотя бы один ID должен быть указан.
+*   `WEBHOOK_URL` (опционально): URL вашего приложения для работы в режиме вебхуков. Если не указан, бот запустится в режиме поллинга.

@@ -1,4 +1,3 @@
-
 from aiogram.dispatcher import FSMContext
 from aiogram.types import Message, CallbackQuery, InlineKeyboardMarkup, InlineKeyboardButton, ContentType, ReplyKeyboardMarkup, ReplyKeyboardRemove
 from aiogram.utils.callback_data import CallbackData
@@ -7,8 +6,9 @@ from states import ProductState, CategoryState
 from aiogram.types.chat import ChatActions
 from handlers.user.menu import settings
 from loader import dp, db, bot
-from filters import IsAdmin
+# Удален import IsAdmin
 from hashlib import md5
+from states.user_mode_state import UserModeState # Добавлен импорт UserModeState
 
 
 category_cb = CallbackData('category', 'id', 'action')
@@ -18,8 +18,9 @@ add_product = '➕ Добавить товар'
 delete_category = '🗑️ Удалить категорию'
 
 
-@dp.message_handler(IsAdmin(), text=settings)
-async def process_settings(message: Message):
+# Обработчик для кнопки '⚙️ Настройка каталога' - срабатывает только в состоянии ADMIN
+@dp.message_handler(text=settings, state=UserModeState.ADMIN) # Изменен фильтр
+async def process_settings(message: Message, state: FSMContext): # Добавлен state
 
     markup = InlineKeyboardMarkup()
 
@@ -34,8 +35,9 @@ async def process_settings(message: Message):
     await message.answer('Настройка категорий:', reply_markup=markup)
 
 
-@dp.callback_query_handler(IsAdmin(), category_cb.filter(action='view'))
-async def category_callback_handler(query: CallbackQuery, callback_data: dict, state: FSMContext):
+# Обработчик для колбэков категорий - срабатывает только в состоянии ADMIN
+@dp.callback_query_handler(category_cb.filter(action='view'), state=UserModeState.ADMIN) # Изменен фильтр
+async def category_callback_handler(query: CallbackQuery, callback_data: dict, state: FSMContext): # Добавлен state
 
     category_idx = callback_data['id']
 
@@ -46,20 +48,24 @@ async def category_callback_handler(query: CallbackQuery, callback_data: dict, s
     await query.message.delete()
     await query.answer('Все добавленные товары в эту категорию.')
     await state.update_data(category_index=category_idx)
+    # Передаем state в show_products если он там нужен, иначе не обязательно
     await show_products(query.message, products, category_idx)
 
 
 # category
 
 
-@dp.callback_query_handler(IsAdmin(), text='add_category')
-async def add_category_callback_handler(query: CallbackQuery):
+# Обработчик для колбэка 'add_category' - срабатывает только в состоянии ADMIN
+@dp.callback_query_handler(text='add_category', state=UserModeState.ADMIN) # Изменен фильтр
+async def add_category_callback_handler(query: CallbackQuery, state: FSMContext): # Добавлен state
     await query.message.delete()
     await query.message.answer('Название категории?')
     await CategoryState.title.set()
 
 
-@dp.message_handler(IsAdmin(), state=CategoryState.title)
+# Обработчик для установки названия категории - срабатывает только в состоянии CategoryState.title
+# Не требует дополнительного фильтра по UserModeState, так как уже в специфическом состоянии
+@dp.message_handler(state=CategoryState.title)
 async def set_category_title_handler(message: Message, state: FSMContext):
 
     category = message.text
@@ -67,11 +73,14 @@ async def set_category_title_handler(message: Message, state: FSMContext):
     db.query('INSERT INTO categories VALUES (?, ?)', (idx, category))
 
     await state.finish()
-    await process_settings(message)
+    # После завершения, пользователь должен вернуться в основное состояние ADMIN
+    await UserModeState.ADMIN.set()
+    await process_settings(message, state) # Передаем state
 
 
-@dp.message_handler(IsAdmin(), text=delete_category)
-async def delete_category_handler(message: Message, state: FSMContext):
+# Обработчик для кнопки '🗑️ Удалить категорию' - срабатывает только в состоянии ADMIN
+@dp.message_handler(text=delete_category, state=UserModeState.ADMIN) # Изменен фильтр
+async def delete_category_handler(message: Message, state: FSMContext): # Добавлен state
 
     async with state.proxy() as data:
 
@@ -84,14 +93,17 @@ async def delete_category_handler(message: Message, state: FSMContext):
             db.query('DELETE FROM categories WHERE idx=?', (idx,))
 
             await message.answer('Готово!', reply_markup=ReplyKeyboardRemove())
-            await process_settings(message)
+            # После завершения, пользователь должен вернуться в основное состояние ADMIN
+            await UserModeState.ADMIN.set()
+            await process_settings(message, state) # Передаем state
 
 
 # add product
 
 
-@dp.message_handler(IsAdmin(), text=add_product)
-async def process_add_product(message: Message):
+# Обработчик для кнопки '➕ Добавить товар' - срабатывает только в состоянии ADMIN
+@dp.message_handler(text=add_product, state=UserModeState.ADMIN) # Изменен фильтр
+async def process_add_product(message: Message, state: FSMContext): # Добавлен state
 
     await ProductState.title.set()
 
@@ -101,21 +113,31 @@ async def process_add_product(message: Message):
     await message.answer('Название?', reply_markup=markup)
 
 
-@dp.message_handler(IsAdmin(), text=cancel_message, state=ProductState.title)
+# Обработчик отмены на этапе title - срабатывает только в состоянии ProductState.title
+# Не требует дополнительного фильтра по UserModeState
+@dp.message_handler(text=cancel_message, state=ProductState.title)
 async def process_cancel(message: Message, state: FSMContext):
 
     await message.answer('Ок, отменено!', reply_markup=ReplyKeyboardRemove())
     await state.finish()
 
-    await process_settings(message)
+    # После отмены, пользователь должен вернуться в основное состояние ADMIN
+    await UserModeState.ADMIN.set()
+    await process_settings(message, state) # Передаем state
 
 
-@dp.message_handler(IsAdmin(), text=back_message, state=ProductState.title)
-async def process_title_back(message: Message, state: FSMContext):
-    await process_add_product(message)
+# Обработчик кнопки назад на этапе title - срабатывает только в состоянии ProductState.title
+# Не требует дополнительного фильтра по UserModeState
+@dp.message_handler(text=back_message, state=ProductState.title)
+async def process_title_back(message: Message, state: FSMContext): # Добавлен state
+    # Возвращаемся к предыдущему шагу (выбор добавления/удаления товара в категории) в состоянии ADMIN
+    await UserModeState.ADMIN.set() # Возвращаемся в основное админское состояние
+    await process_settings(message, state) # Передаем state
 
 
-@dp.message_handler(IsAdmin(), state=ProductState.title)
+# Обработчик ввода названия товара - срабатывает только в состоянии ProductState.title
+# Не требует дополнительного фильтра по UserModeState
+@dp.message_handler(state=ProductState.title)
 async def process_title(message: Message, state: FSMContext):
 
     async with state.proxy() as data:
@@ -125,7 +147,9 @@ async def process_title(message: Message, state: FSMContext):
     await message.answer('Описание?', reply_markup=back_markup())
 
 
-@dp.message_handler(IsAdmin(), text=back_message, state=ProductState.body)
+# Обработчик кнопки назад на этапе body - срабатывает только в состоянии ProductState.body
+# Не требует дополнительного фильтра по UserModeState
+@dp.message_handler(text=back_message, state=ProductState.body)
 async def process_body_back(message: Message, state: FSMContext):
 
     await ProductState.title.set()
@@ -135,7 +159,9 @@ async def process_body_back(message: Message, state: FSMContext):
         await message.answer(f"Изменить название с <b>{data['title']}</b>?", reply_markup=back_markup())
 
 
-@dp.message_handler(IsAdmin(), state=ProductState.body)
+# Обработчик ввода описания товара - срабатывает только в состоянии ProductState.body
+# Не требует дополнительного фильтра по UserModeState
+@dp.message_handler(state=ProductState.body)
 async def process_body(message: Message, state: FSMContext):
 
     async with state.proxy() as data:
@@ -145,7 +171,9 @@ async def process_body(message: Message, state: FSMContext):
     await message.answer('Фото?', reply_markup=back_markup())
 
 
-@dp.message_handler(IsAdmin(), content_types=ContentType.PHOTO, state=ProductState.image)
+# Обработчик загрузки фото - срабатывает только в состоянии ProductState.image
+# Не требует дополнительного фильтра по UserModeState
+@dp.message_handler(content_types=ContentType.PHOTO, state=ProductState.image)
 async def process_image_photo(message: Message, state: FSMContext):
 
     fileID = message.photo[-1].file_id
@@ -159,7 +187,9 @@ async def process_image_photo(message: Message, state: FSMContext):
     await message.answer('Цена?', reply_markup=back_markup())
 
 
-@dp.message_handler(IsAdmin(), content_types=ContentType.TEXT, state=ProductState.image)
+# Обработчик текстового ввода на этапе фото (для кнопки назад) - срабатывает только в состоянии ProductState.image
+# Не требует дополнительного фильтра по UserModeState
+@dp.message_handler(content_types=ContentType.TEXT, state=ProductState.image)
 async def process_image_url(message: Message, state: FSMContext):
 
     if message.text == back_message:
@@ -175,7 +205,9 @@ async def process_image_url(message: Message, state: FSMContext):
         await message.answer('Вам нужно прислать фото товара.')
 
 
-@dp.message_handler(IsAdmin(), lambda message: not message.text.isdigit(), state=ProductState.price)
+# Обработчик нечислового ввода цены (включая кнопку назад) - срабатывает только в состоянии ProductState.price
+# Не требует дополнительного фильтра по UserModeState
+@dp.message_handler(lambda message: not message.text.isdigit(), state=ProductState.price)
 async def process_price_invalid(message: Message, state: FSMContext):
 
     if message.text == back_message:
@@ -191,7 +223,9 @@ async def process_price_invalid(message: Message, state: FSMContext):
         await message.answer('Укажите цену в виде числа!')
 
 
-@dp.message_handler(IsAdmin(), lambda message: message.text.isdigit(), state=ProductState.price)
+# Обработчик числового ввода цены - срабатывает только в состоянии ProductState.price
+# Не требует дополнительного фильтра по UserModeState
+@dp.message_handler(lambda message: message.text.isdigit(), state=ProductState.price)
 async def process_price(message: Message, state: FSMContext):
 
     async with state.proxy() as data:
@@ -203,7 +237,7 @@ async def process_price(message: Message, state: FSMContext):
         price = data['price']
 
         await ProductState.next()
-        text = f'<b>{title}</b>\n\n{body}\n\nЦена: {price} рублей.'
+        text = f'<b>{title}</b>{body}Цена: {price} рублей.'
 
         markup = check_markup()
 
@@ -212,12 +246,16 @@ async def process_price(message: Message, state: FSMContext):
                                    reply_markup=markup)
 
 
-@dp.message_handler(IsAdmin(), lambda message: message.text not in [back_message, all_right_message], state=ProductState.confirm)
+# Обработчик неверного ввода на этапе подтверждения - срабатывает только в состоянии ProductState.confirm
+# Не требует дополнительного фильтра по UserModeState
+@dp.message_handler(lambda message: message.text not in [back_message, all_right_message], state=ProductState.confirm)
 async def process_confirm_invalid(message: Message, state: FSMContext):
     await message.answer('Такого варианта не было.')
 
 
-@dp.message_handler(IsAdmin(), text=back_message, state=ProductState.confirm)
+# Обработчик кнопки назад на этапе подтверждения - срабатывает только в состоянии ProductState.confirm
+# Не требует дополнительного фильтра по UserModeState
+@dp.message_handler(text=back_message, state=ProductState.confirm)
 async def process_confirm_back(message: Message, state: FSMContext):
 
     await ProductState.price.set()
@@ -227,7 +265,9 @@ async def process_confirm_back(message: Message, state: FSMContext):
         await message.answer(f"Изменить цену с <b>{data['price']}</b>?", reply_markup=back_markup())
 
 
-@dp.message_handler(IsAdmin(), text=all_right_message, state=ProductState.confirm)
+# Обработчик кнопки подтверждения - срабатывает только в состоянии ProductState.confirm
+# Не требует дополнительного фильтра по UserModeState
+@dp.message_handler(text=all_right_message, state=ProductState.confirm)
 async def process_confirm(message: Message, state: FSMContext):
 
     async with state.proxy() as data:
@@ -246,29 +286,35 @@ async def process_confirm(message: Message, state: FSMContext):
                  (idx, title, body, image, int(price), tag))
 
     await state.finish()
+    # После завершения, пользователь должен вернуться в основное состояние ADMIN
+    await UserModeState.ADMIN.set()
     await message.answer('Готово!', reply_markup=ReplyKeyboardRemove())
-    await process_settings(message)
+    await process_settings(message, state) # Передаем state
 
 
 # delete product
 
 
-@dp.callback_query_handler(IsAdmin(), product_cb.filter(action='delete'))
-async def delete_product_callback_handler(query: CallbackQuery, callback_data: dict):
+# Обработчик для колбэка удаления товара - срабатывает только в состоянии ADMIN
+@dp.callback_query_handler(product_cb.filter(action='delete'), state=UserModeState.ADMIN) # Изменен фильтр
+async def delete_product_callback_handler(query: CallbackQuery, callback_data: dict, state: FSMContext): # Добавлен state
 
     product_idx = callback_data['id']
     db.query('DELETE FROM products WHERE idx=?', (product_idx,))
     await query.answer('Удалено!')
     await query.message.delete()
+    # После удаления, пользователь остается в состоянии ADMIN, нет необходимости сбрасывать состояние UserModeState
 
 
-async def show_products(m, products, category_idx):
+# Вспомогательная функция show_products - не обработчик, state здесь не нужен, если он не используется внутри
+# Добавлено состояние ADMIN для обработчика ReplyKeyboard
+async def show_products(m: Message, products, category_idx):
 
     await bot.send_chat_action(m.chat.id, ChatActions.TYPING)
 
     for idx, title, body, image, price, tag in products:
 
-        text = f'<b>{title}</b>\n\n{body}\n\nЦена: {price} рублей.'
+        text = f'<b>{title}</b>{body} Цена: {price} рублей.'
 
         markup = InlineKeyboardMarkup()
         markup.add(InlineKeyboardButton(
@@ -282,4 +328,5 @@ async def show_products(m, products, category_idx):
     markup.add(add_product)
     markup.add(delete_category)
 
-    await m.answer('Хотите что-нибудь добавить или удалить?', reply_markup=markup)
+    # Отправляем ReplyKeyboard в состоянии ADMIN
+    await m.answer('Хотите что-нибудь добавить или удалить?', reply_markup=markup) # Здесь нет необходимости указывать state
