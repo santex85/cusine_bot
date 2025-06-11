@@ -25,7 +25,8 @@ async def handle_webhook(request):
     index = url.rfind('/')
     token = url[index+1:]
 
-    if token == loader.bot.token:
+    # Используем правильный атрибут _token
+    if token == loader.bot._token:
         update = types.Update(**await request.json())
         await loader.dp.process_update(update)
         return web.Response()
@@ -39,8 +40,8 @@ async def health_check(request):
 
 # --- Создание и запуск приложения ---
 app = web.Application()
-# Используем loader.bot.token для построения пути
-app.router.add_post(f'/{config.BOT_TOKEN}', handle_webhook)
+# Используем loader.bot._token для построения пути
+app.router.add_post(f'/{loader.bot._token}', handle_webhook)
 app.router.add_get('/health', health_check)
 
 # Важно! При запуске в Cloud Run не нужно вызывать web.run_app.
