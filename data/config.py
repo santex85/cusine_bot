@@ -16,18 +16,13 @@ if ADMINS_STR:
 BOT_TOKEN = os.getenv("BOT_TOKEN")
 
 # --- Настройка вебхука ---
-WEBHOOK_URL = None
-WEBHOOK_PATH = f"/webhook/{BOT_TOKEN}"
+# Firebase App Hosting предоставляет полный URL в переменной APP_URL
+APP_URL = os.getenv("APP_URL", "https://your-app-url-is-not-set.com")
 
-# Проверяем, запущено ли приложение в облачной среде (Firebase/Google Cloud)
-# Переменная SERVICE_URL предоставляется хостингом
-service_url = os.environ.get("SERVICE_URL")
-if service_url:
-    WEBHOOK_URL = f"{service_url.rstrip('/')}{WEBHOOK_PATH}"
+WEBHOOK_URL = f"{APP_URL.rstrip('/')}/{BOT_TOKEN}"
 
 print("--- Configuration ---")
 print(f"ADMINS: {ADMINS}")
 print(f"BOT_TOKEN is set: {'Yes' if BOT_TOKEN else 'No'}")
-print(f"WEBHOOK_PATH: {WEBHOOK_PATH}")
 print(f"WEBHOOK_URL: {WEBHOOK_URL}")
 print("---------------------")
