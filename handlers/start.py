@@ -20,8 +20,8 @@ async def start_handler(message: Message, state: FSMContext):
 
     # Проверяем, является ли пользователь администратором
     if cid in ADMINS:
-        await UserModeState.ADMIN.set()
+        await state.set_state(UserModeState.ADMIN)
         await admin_menu(message, state)
     else:
-        await UserModeState.USER.set()
+        await state.set_state(UserModeState.USER)
         await user_menu(message, state)
