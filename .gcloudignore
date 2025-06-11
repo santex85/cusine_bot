@@ -1,0 +1,11 @@
+.gcloudignore
+.gitignore
+.git
+.idea/
+.vscode/
+__pycache__/
+*.pyc
+venv/
+.venv/
+# Исключаем локальную базу данных, ее не должно быть в образе
+data/database.db
