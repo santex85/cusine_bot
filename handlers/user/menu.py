@@ -1,6 +1,6 @@
 from aiogram.types import Message, ReplyKeyboardMarkup
 from aiogram.dispatcher import FSMContext
-from loader import dp
+from loader import dp, bot
 from states.user_mode_state import UserModeState
 
 catalog = '🛍️ Каталог'
@@ -16,4 +16,4 @@ async def user_menu(message: Message, state: FSMContext):
     markup.add(cart)
     markup.add(delivery_status)
 
-    await message.answer('Меню', reply_markup=markup)
+    await bot.send_message(message.chat.id, 'Меню', reply_markup=markup)

@@ -1,6 +1,6 @@
 from aiogram.types import Message, ReplyKeyboardMarkup
 from aiogram.dispatcher import FSMContext
-from loader import dp
+from loader import dp, bot
 from states.user_mode_state import UserModeState
 
 settings = '⚙️ Настройка каталога'
@@ -13,4 +13,4 @@ async def admin_menu(message: Message, state: FSMContext):
     markup.add(settings)
     markup.add(questions, orders)
 
-    await message.answer('Меню администратора', reply_markup=markup)
+    await bot.send_message(message.chat.id, 'Меню администратора', reply_markup=markup)
