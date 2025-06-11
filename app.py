@@ -6,17 +6,11 @@ load_dotenv()
 
 from data import config
 from loader import dp, bot, db
-from aiogram import types, executor
+from aiogram import types
 import logging
 
-# Внутри вашего файла app.py
-from flask import Flask
-
-app = Flask(__name__) # <-- Убедитесь, что эта переменная называется 'app'
-
-
 # --- Функции жизненного цикла ---
-async def on_startup(app):
+async def on_startup(app_instance):
     """Выполняется при старте приложения."""
     logging.basicConfig(level=logging.INFO)
     print("Приложение запускается...")
@@ -28,7 +22,7 @@ async def on_startup(app):
         await bot.set_webhook(url=config.WEBHOOK_URL)
     print(f"Вебхук установлен: {config.WEBHOOK_URL}")
 
-async def on_shutdown(app):
+async def on_shutdown(app_instance):
     """Выполняется при остановке приложения."""
     logging.warning("Приложение останавливается...")
     # Закрываем сессию бота
@@ -36,8 +30,9 @@ async def on_shutdown(app):
     # Удаляем вебхук при остановке
     await bot.delete_webhook()
     # Закрываем соединение с БД
-    await dp.storage.close()
-    await dp.storage.wait_closed()
+    if dp.storage:
+        await dp.storage.close()
+        await dp.storage.wait_closed()
     logging.warning("Приложение остановлено.")
 
 # --- Обработчик вебхука ---
@@ -60,6 +55,7 @@ async def health_check(request):
     return web.Response(text="OK")
 
 # --- Создание и запуск приложения ---
+# Это тот самый 'app', который gunicorn будет запускать
 app = web.Application()
 app.router.add_post(f'/{config.BOT_TOKEN}', handle_webhook)
 app.router.add_get('/health', health_check)
@@ -68,6 +64,8 @@ app.router.add_get('/health', health_check)
 app.on_startup.append(on_startup)
 app.on_shutdown.append(on_shutdown)
 
-# Эта часть нужна только для локального запуска
+# Эта часть нужна только для локального запуска через `python app.py`
 if __name__ == '__main__':
+    # Импортируем все обработчики, чтобы они зарегистрировались в dp
+    import handlers
     web.run_app(app, host="0.0.0.0", port=int(os.environ.get('PORT', 8080)))

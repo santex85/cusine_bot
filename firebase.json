@@ -1,9 +1,13 @@
 {
-  "apphosting": {
+  "hosting": {
     "source": ".",
-    "runCommand": "gunicorn --workers 1 --threads 8 app:app",
-    "cpu": 1,
-    "memoryMiB": 512,
-    "secrets": ["TELEGRAM_TOKEN"]
+    "ignore": [
+      "firebase.json",
+      "**/.*",
+      "**/node_modules/**"
+    ],
+    "frameworksBackend": {
+      "id": "satvabot"
+    }
   }
 }
