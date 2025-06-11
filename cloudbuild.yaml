@@ -20,5 +20,6 @@ steps:
       - '--allow-unauthenticated'
       - '--port=8080' # Порт, который слушает gunicorn внутри контейнера
       - '--set-secrets=BOT_TOKEN=BOT_TOKEN:latest,ADMINS=ADMINS:latest'
+      - '--set-env-vars=APP_URL=https://satvabot-4zxzz3i35q-de.a.run.app' # Добавляем URL приложения
 images:
   - 'gcr.io/$PROJECT_ID/satvabot:$BUILD_ID'
