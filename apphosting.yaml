@@ -20,3 +20,7 @@ env:
       secret: BOT_TOKEN
     - variable: ADMINS
       secret: ADMINS
+
+# The command to run to start the server.
+# See https://firebase.google.com/docs/app-hosting/configure#entrypoint
+entrypoint: gunicorn --worker-class uvicorn.workers.UvicornWorker --bind :$PORT app:app
