@@ -14,5 +14,4 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY . .
 
 # Указываем Gunicorn в качестве точки входа.
-# Добавляем флаг -c для использования нашего конфиг. файла
-CMD exec gunicorn --worker-class uvicorn.workers.UvicornWorker -c gunicorn.conf.py --bind :$PORT app:app
+CMD exec gunicorn --worker-class uvicorn.workers.UvicornWorker --bind :$PORT app:app
