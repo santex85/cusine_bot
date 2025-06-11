@@ -1,25 +1,39 @@
 steps:
-  # Шаг 1: Сборка Docker-образа
+  # Шаг 1: Устанавливаем зависимости для скрипта установки вебхука
+  - name: 'python:3.11-slim'
+    entrypoint: 'pip'
+    args: ['install', '--no-cache-dir', '-r', 'requirements.txt']
+
+  # Шаг 2: Запускаем скрипт установки вебхука
+  # Передаем секреты и переменные окружения как переменные для этого шага
+  - name: 'python:3.11-slim'
+    entrypoint: 'python3'
+    args: ['set_webhook.py']
+    secretEnv: ['BOT_TOKEN', 'ADMINS']
+    env:
+      - 'APP_URL=https://satvabot-4zxzz3i35q-de.a.run.app'
+
+  # Шаг 3: Сборка основного Docker-образа
   - name: 'gcr.io/cloud-builders/docker'
     args: ['build', '-t', 'gcr.io/$PROJECT_ID/satvabot:$BUILD_ID', '.']
 
-  # Шаг 2: Отправка образа в Google Container Registry
+  # Шаг 4: Отправка образа в Google Container Registry
   - name: 'gcr.io/cloud-builders/docker'
     args: ['push', 'gcr.io/$PROJECT_ID/satvabot:$BUILD_ID']
 
-  # Шаг 3: Развертывание образа в Cloud Run
+  # Шаг 5: Развертывание образа в Cloud Run
   - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
     entrypoint: gcloud
     args:
       - 'run'
       - 'deploy'
-      - 'satvabot' # Имя вашего сервиса в Cloud Run
+      - 'satvabot'
       - '--image=gcr.io/$PROJECT_ID/satvabot:$BUILD_ID'
-      - '--region=asia-east1' # Регион вашего бэкенда
+      - '--region=asia-east1'
       - '--platform=managed'
       - '--allow-unauthenticated'
-      - '--port=8080' # Порт, который слушает gunicorn внутри контейнера
+      - '--port=8080'
       - '--set-secrets=BOT_TOKEN=BOT_TOKEN:latest,ADMINS=ADMINS:latest'
-      - '--set-env-vars=APP_URL=https://satvabot-4zxzz3i35q-de.a.run.app' # Добавляем URL приложения
+      - '--set-env-vars=APP_URL=https://satvabot-4zxzz3i35q-de.a.run.app'
 images:
   - 'gcr.io/$PROJECT_ID/satvabot:$BUILD_ID'

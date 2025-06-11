@@ -9,31 +9,8 @@ from loader import dp, bot, db
 from aiogram import types
 import logging
 
-# --- Функции жизненного цикла ---
-async def on_startup(app_instance):
-    """Выполняется при старте приложения."""
-    logging.basicConfig(level=logging.INFO)
-    print("Приложение запускается...")
-    db.create_tables()
-    # Установка вебхука. URL берется из конфига.
-    webhook = await bot.get_webhook_info()
-    if webhook.url != config.WEBHOOK_URL:
-        await bot.delete_webhook()
-        await bot.set_webhook(url=config.WEBHOOK_URL)
-    print(f"Вебхук установлен: {config.WEBHOOK_URL}")
-
-async def on_shutdown(app_instance):
-    """Выполняется при остановке приложения."""
-    logging.warning("Приложение останавливается...")
-    # Закрываем сессию бота
-    await bot.session.close()
-    # Удаляем вебхук при остановке
-    await bot.delete_webhook()
-    # Закрываем соединение с БД
-    if dp.storage:
-        await dp.storage.close()
-        await dp.storage.wait_closed()
-    logging.warning("Приложение остановлено.")
+# Инициализация логирования
+logging.basicConfig(level=logging.INFO)
 
 # --- Обработчик вебхука ---
 async def handle_webhook(request):
@@ -55,17 +32,15 @@ async def health_check(request):
     return web.Response(text="OK")
 
 # --- Создание и запуск приложения ---
-# Это тот самый 'app', который gunicorn будет запускать
 app = web.Application()
 app.router.add_post(f'/{config.BOT_TOKEN}', handle_webhook)
 app.router.add_get('/health', health_check)
 
-# Регистрируем функции on_startup и on_shutdown
-app.on_startup.append(on_startup)
-app.on_shutdown.append(on_shutdown)
-
-# Эта часть нужна только для локального запуска через `python app.py`
+# Важно! При запуске в Cloud Run не нужно вызывать web.run_app.
+# Gunicorn сам запустит приложение. Этот блок остается для локальной отладки.
 if __name__ == '__main__':
     # Импортируем все обработчики, чтобы они зарегистрировались в dp
     import handlers
+    print("Запуск в режиме локальной отладки...")
+    db.create_tables() # Создаем таблицы для локального запуска
     web.run_app(app, host="0.0.0.0", port=int(os.environ.get('PORT', 8080)))
