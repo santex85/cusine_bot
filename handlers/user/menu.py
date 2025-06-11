@@ -1,13 +1,15 @@
 from aiogram.types import Message, ReplyKeyboardMarkup
 from aiogram.dispatcher import FSMContext
-from loader import dp
+# Импортируем сам модуль loader
+import loader
 from states.user_mode_state import UserModeState
 
 catalog = '🛍️ Каталог'
 cart = '🛒 Корзина'
 delivery_status = '🚚 Статус заказа'
 
-@dp.message_handler(commands='menu', state=UserModeState.USER)
+# Используем loader.dp для регистрации обработчика
+@loader.dp.message_handler(commands='menu', state=UserModeState.USER)
 async def user_menu(message: Message, state: FSMContext):
     markup = ReplyKeyboardMarkup(selective=True, resize_keyboard=True)
     markup.add(catalog)

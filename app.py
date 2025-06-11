@@ -5,7 +5,8 @@ from aiohttp import web
 load_dotenv()
 
 from data import config
-from loader import on_startup_init, dp, bot, db
+# Импортируем сам модуль loader
+import loader
 from aiogram import types
 import logging
 
@@ -13,19 +14,20 @@ import logging
 logging.basicConfig(level=logging.INFO)
 
 # --- ИНИЦИАЛИЗАЦИЯ ПЕРЕД ЗАПУСКОМ ---
-# Вызываем нашу новую функцию один раз, до того как gunicorn создаст воркеров
-on_startup_init() 
+# Вызываем нашу функцию инициализации один раз
+loader.on_startup_init() 
 
 # --- Обработчик вебхука ---
 async def handle_webhook(request):
     """Принимает обновления от Telegram."""
+    # Используем loader.bot и loader.dp
     url = str(request.url)
     index = url.rfind('/')
     token = url[index+1:]
 
-    if token == bot.token:
+    if token == loader.bot.token:
         update = types.Update(**await request.json())
-        await dp.process_update(update)
+        await loader.dp.process_update(update)
         return web.Response()
     else:
         return web.Response(status=403)
@@ -37,6 +39,7 @@ async def health_check(request):
 
 # --- Создание и запуск приложения ---
 app = web.Application()
+# Используем loader.bot.token для построения пути
 app.router.add_post(f'/{config.BOT_TOKEN}', handle_webhook)
 app.router.add_get('/health', health_check)
 
@@ -46,5 +49,6 @@ if __name__ == '__main__':
     # Импортируем все обработчики, чтобы они зарегистрировались в dp
     import handlers
     print("Запуск в режиме локальной отладки...")
-    db.create_tables() # Создаем таблицы для локального запуска
+    # Используем loader.db
+    loader.db.create_tables()
     web.run_app(app, host="0.0.0.0", port=int(os.environ.get('PORT', 8080)))
