@@ -23,4 +23,11 @@ def on_startup_init():
     dp = Dispatcher(bot, storage=storage)
     db = DatabaseManager('data/database.db')
     
+    # Создаем таблицы сразу после инициализации базы данных
+    try:
+        db.create_tables()
+        print("Таблицы успешно созданы (если их не было).")
+    except Exception as e:
+        print(f"Ошибка при создании таблиц: {e}")
+
     print("Инициализация завершена.")

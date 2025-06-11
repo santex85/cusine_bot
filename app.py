@@ -53,6 +53,4 @@ app.router.add_get('/health', health_check)
 # Gunicorn сам запустит приложение. Этот блок остается для локальной отладки.
 if __name__ == '__main__':
     print("Запуск в режиме локальной отладки...")
-    # Используем loader.db
-    loader.db.create_tables()
     web.run_app(app, host="0.0.0.0", port=int(os.environ.get('PORT', 8080)))
