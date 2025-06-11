@@ -17,6 +17,11 @@ logging.basicConfig(level=logging.INFO)
 # Вызываем нашу функцию инициализации один раз
 loader.on_startup_init() 
 
+# --- РЕГИСТРАЦИЯ ОБРАБОТЧИКОВ ---
+# Это самая важная строка, которой не хватало.
+# Она заставляет выполниться код в handlers/__init__.py и зарегистрировать все хендлеры.
+import handlers
+
 # --- Обработчик вебхука ---
 async def handle_webhook(request):
     """Принимает обновления от Telegram."""
@@ -47,8 +52,6 @@ app.router.add_get('/health', health_check)
 # Важно! При запуске в Cloud Run не нужно вызывать web.run_app.
 # Gunicorn сам запустит приложение. Этот блок остается для локальной отладки.
 if __name__ == '__main__':
-    # Импортируем все обработчики, чтобы они зарегистрировались в dp
-    import handlers
     print("Запуск в режиме локальной отладки...")
     # Используем loader.db
     loader.db.create_tables()
