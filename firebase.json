@@ -1,7 +1,6 @@
 {
   "apphosting": {
     "source": ".",
-    "runCommand": "gunicorn --bind :$PORT --workers 4 --worker-class uvicorn.workers.UvicornWorker app:app",
     "cpu": 1,
     "memoryMiB": 512
   }
