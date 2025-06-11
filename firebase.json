@@ -6,13 +6,9 @@
       "**/.*",
       "**/node_modules/**"
     ],
-    "rewrites": [
-      {
-        "source": "**",
-        "run": {
-          "serviceId": "satvabot"
-        }
-      }
-    ]
+    "frameworksBackend": {
+      "id": "satvabot",
+      "region": "asia-east1"
+    }
   }
 }
