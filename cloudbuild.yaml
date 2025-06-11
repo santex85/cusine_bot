@@ -1,11 +1,21 @@
+# Объявляем, какие секреты будут доступны для этой сборки
+availableSecrets:
+  secretManager:
+  - versionName: projects/$PROJECT_ID/secrets/BOT_TOKEN/versions/latest
+    env: 'BOT_TOKEN'
+  - versionName: projects/$PROJECT_ID/secrets/ADMINS/versions/latest
+    env: 'ADMINS'
+
 steps:
   # Шаг 1: Устанавливаем зависимости для скрипта установки вебхука
   - name: 'python:3.11-slim'
     entrypoint: 'pip'
     args: ['install', '--no-cache-dir', '-r', 'requirements.txt']
+    # Секреты нужны и здесь, т.к. dotenv может быть одной из зависимостей
+    secretEnv: ['BOT_TOKEN', 'ADMINS'] 
 
   # Шаг 2: Запускаем скрипт установки вебхука
-  # Передаем секреты и переменные окружения как переменные для этого шага
+  # Теперь, когда секреты объявлены, этот шаг будет работать
   - name: 'python:3.11-slim'
     entrypoint: 'python3'
     args: ['set_webhook.py']
