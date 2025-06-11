@@ -1,7 +1,9 @@
-from .menu import dp
-from .cart import dp
-from .catalog import dp
-from .delivery_status import dp
-from .sos import dp
+from loader import dp
+
+from . import menu
+from . import cart
+from . import catalog
+from . import delivery_status
+from . import sos
 
 __all__ = ['dp']
