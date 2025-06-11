@@ -9,6 +9,12 @@ from loader import dp, bot, db
 from aiogram import types, executor
 import logging
 
+# Внутри вашего файла app.py
+from flask import Flask
+
+app = Flask(__name__) # <-- Убедитесь, что эта переменная называется 'app'
+
+
 # --- Функции жизненного цикла ---
 async def on_startup(app):
     """Выполняется при старте приложения."""

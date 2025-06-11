@@ -1,7 +1,9 @@
 {
   "apphosting": {
     "source": ".",
+    "runCommand": "gunicorn --workers 1 --threads 8 app:app",
     "cpu": 1,
-    "memoryMiB": 512
+    "memoryMiB": 512,
+    "secrets": ["TELEGRAM_TOKEN"]
   }
 }
