@@ -7,31 +7,27 @@ availableSecrets:
     env: 'ADMINS'
 
 steps:
-  # Шаг 1: Устанавливаем зависимости для скрипта установки вебхука
+  # Шаг 1: Устанавливаем зависимости и сразу запускаем скрипт установки вебхука в той же среде
   - name: 'python:3.11-slim'
-    entrypoint: 'pip'
-    args: ['install', '--no-cache-dir', '-r', 'requirements.txt']
-    # Секреты нужны и здесь, т.к. dotenv может быть одной из зависимостей
-    secretEnv: ['BOT_TOKEN', 'ADMINS'] 
-
-  # Шаг 2: Запускаем скрипт установки вебхука
-  # Теперь, когда секреты объявлены, этот шаг будет работать
-  - name: 'python:3.11-slim'
-    entrypoint: 'python3'
-    args: ['set_webhook.py']
+    entrypoint: 'bash'
+    args:
+      - '-c'
+      - |
+        pip install --no-cache-dir -r requirements.txt && \
+        python3 set_webhook.py
     secretEnv: ['BOT_TOKEN', 'ADMINS']
     env:
       - 'APP_URL=https://satvabot-4zxzz3i35q-de.a.run.app'
 
-  # Шаг 3: Сборка основного Docker-образа
+  # Шаг 2: Сборка основного Docker-образа
   - name: 'gcr.io/cloud-builders/docker'
     args: ['build', '-t', 'gcr.io/$PROJECT_ID/satvabot:$BUILD_ID', '.']
 
-  # Шаг 4: Отправка образа в Google Container Registry
+  # Шаг 3: Отправка образа в Google Container Registry
   - name: 'gcr.io/cloud-builders/docker'
     args: ['push', 'gcr.io/$PROJECT_ID/satvabot:$BUILD_ID']
 
-  # Шаг 5: Развертывание образа в Cloud Run
+  # Шаг 4: Развертывание образа в Cloud Run
   - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
     entrypoint: gcloud
     args:
