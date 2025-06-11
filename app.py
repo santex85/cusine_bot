@@ -17,19 +17,6 @@ from handlers.admin.menu import admin_menu
 
 filters.setup(dp)
 
-WEBAPP_HOST = "0.0.0.0"
-WEBAPP_PORT = int(os.environ.get("PORT", 8080))
-
-@dp.message_handler(commands='start', state='*')
-async def cmd_start(message: types.Message, state: FSMContext):
-    await state.finish()
-    if message.chat.id in config.ADMINS:
-        await UserModeState.ADMIN.set()
-        await admin_menu(message, state)
-    else:
-        await UserModeState.USER.set()
-        await user_menu(message, state)
-
 async def on_startup(dp):
     logging.basicConfig(level=logging.INFO)
     db.create_tables()
@@ -45,22 +32,15 @@ async def on_shutdown():
 async def health_check(request):
     return web.Response(text="OK")
 
+# Создаем приложение и добавляем health check
+app = executor.get_app()
+app.router.add_get('/health', health_check)
+
+# Настраиваем on_startup и on_shutdown
+executor.on_startup(on_startup)
+executor.on_shutdown(on_shutdown)
+
+# Эта часть нужна для локального запуска, на сервере она не будет выполняться
 if __name__ == '__main__':
-    if os.environ.get("K_SERVICE"):
-        print("Starting in webhook mode...")
-        app = executor.get_app()
-        app.router.add_get('/health', health_check)
-        
-        executor.start_webhook(
-            dispatcher=dp,
-            webhook_path=config.WEBHOOK_PATH,
-            on_startup=on_startup,
-            on_shutdown=on_shutdown,
-            skip_updates=True,
-            host=WEBAPP_HOST,
-            port=WEBAPP_PORT,
-            app=app,
-        )
-    else:
-        print("Starting in polling mode...")
-        executor.start_polling(dp, on_startup=on_startup, skip_updates=False)
+    logging.basicConfig(level=logging.INFO)
+    executor.start_polling(dp, on_startup=on_startup, skip_updates=False)
