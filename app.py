@@ -5,12 +5,16 @@ from aiohttp import web
 load_dotenv()
 
 from data import config
-from loader import dp, bot, db
+from loader import on_startup_init, dp, bot, db
 from aiogram import types
 import logging
 
 # Инициализация логирования
 logging.basicConfig(level=logging.INFO)
+
+# --- ИНИЦИАЛИЗАЦИЯ ПЕРЕД ЗАПУСКОМ ---
+# Вызываем нашу новую функцию один раз, до того как gunicorn создаст воркеров
+on_startup_init() 
 
 # --- Обработчик вебхука ---
 async def handle_webhook(request):

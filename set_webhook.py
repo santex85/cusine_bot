@@ -8,14 +8,16 @@ print("--- Запуск скрипта установки вебхука ---")
 load_dotenv()
 
 # Импортируем нужные компоненты
-# Убедитесь, что пути импорта корректны для вашего проекта
-from loader import bot
+from loader import bot, on_startup_init
 from data.config import WEBHOOK_URL, BOT_TOKEN
 
 async def main():
     """
     Основная функция для установки вебхука.
     """
+    # Сначала инициализируем объекты
+    on_startup_init()
+    
     if not BOT_TOKEN:
         print("ОШИБКА: Секрет BOT_TOKEN не найден.")
         return
