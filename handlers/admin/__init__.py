@@ -1,5 +1,9 @@
-from .add import dp
-from .questions import dp
-from .orders import dp
+from loader import dp
+
+from . import add
+from . import menu
+from . import notifications
+from . import orders
+from . import questions
 
 __all__ = ['dp']
