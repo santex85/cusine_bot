@@ -1,11 +1,11 @@
 steps:
   # Шаг 1: Сборка Docker-образа
   - name: 'gcr.io/cloud-builders/docker'
-    args: ['build', '-t', 'gcr.io/$PROJECT_ID/satvabot:$COMMIT_SHA', '.']
+    args: ['build', '-t', 'gcr.io/$PROJECT_ID/satvabot:$BUILD_ID', '.']
 
   # Шаг 2: Отправка образа в Google Container Registry
   - name: 'gcr.io/cloud-builders/docker'
-    args: ['push', 'gcr.io/$PROJECT_ID/satvabot:$COMMIT_SHA']
+    args: ['push', 'gcr.io/$PROJECT_ID/satvabot:$BUILD_ID']
 
   # Шаг 3: Развертывание образа в Cloud Run
   - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
@@ -14,11 +14,11 @@ steps:
       - 'run'
       - 'deploy'
       - 'satvabot' # Имя вашего сервиса в Cloud Run
-      - '--image=gcr.io/$PROJECT_ID/satvabot:$COMMIT_SHA'
+      - '--image=gcr.io/$PROJECT_ID/satvabot:$BUILD_ID'
       - '--region=asia-east1' # Регион вашего бэкенда
       - '--platform=managed'
       - '--allow-unauthenticated'
       - '--port=8080' # Порт, который слушает gunicorn внутри контейнера
       - '--set-secrets=BOT_TOKEN=BOT_TOKEN:latest,ADMINS=ADMINS:latest'
 images:
-  - 'gcr.io/$PROJECT_ID/satvabot:$COMMIT_SHA'
+  - 'gcr.io/$PROJECT_ID/satvabot:$BUILD_ID'
