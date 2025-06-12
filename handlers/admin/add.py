@@ -93,7 +93,7 @@ async def process_title_back(message: Message, state: FSMContext):
 async def process_title(message: Message, state: FSMContext):
     async with state.proxy() as data:
         data['title'] = message.text
-    await state.set_state(await ProductState.next())
+    await state.set_state(ProductState.body)
     await bot.send_message(message.chat.id, 'Описание?', reply_markup=back_markup())
 
 @dp.message_handler(text=back_message, state=ProductState.body)
@@ -106,7 +106,7 @@ async def process_body_back(message: Message, state: FSMContext):
 async def process_body(message: Message, state: FSMContext):
     async with state.proxy() as data:
         data['body'] = message.text
-    await state.set_state(await ProductState.next())
+    await state.set_state(ProductState.image)
     await bot.send_message(message.chat.id, 'Фото?', reply_markup=back_markup())
 
 @dp.message_handler(content_types=ContentType.PHOTO, state=ProductState.image)
@@ -116,7 +116,7 @@ async def process_image_photo(message: Message, state: FSMContext):
     downloaded_file = (await bot.download_file(file_info.file_path)).read()
     async with state.proxy() as data:
         data['image'] = downloaded_file
-    await state.set_state(await ProductState.next())
+    await state.set_state(ProductState.price)
     await bot.send_message(message.chat.id, 'Цена?', reply_markup=back_markup())
 
 @dp.message_handler(content_types=ContentType.TEXT, state=ProductState.image)
@@ -144,7 +144,7 @@ async def process_price(message: Message, state: FSMContext):
         title = data['title']
         body = data['body']
         price = data['price']
-        await state.set_state(await ProductState.next())
+        await state.set_state(ProductState.confirm)
         text = f'<b>{title}</b>{body}Цена: {price} рублей.'
         markup = check_markup()
         await bot.send_photo(message.chat.id, photo=data['image'],
