@@ -47,7 +47,7 @@ async def add_category_callback_handler(query: CallbackQuery, state: FSMContext)
     except MessageToDeleteNotFound:
         pass
     await bot.send_message(query.message.chat.id, 'Название категории?')
-    await CategoryState.title.set()
+    await state.set_state(CategoryState.title)
 
 @dp.message_handler(state=CategoryState.title)
 async def set_category_title_handler(message: Message, state: FSMContext):
@@ -55,7 +55,7 @@ async def set_category_title_handler(message: Message, state: FSMContext):
     idx = md5(category.encode('utf-8')).hexdigest()
     db.query('INSERT INTO categories VALUES (?, ?)', (idx, category))
     await state.finish()
-    await UserModeState.ADMIN.set()
+    await state.set_state(UserModeState.ADMIN)
     await process_settings(message, state)
 
 @dp.message_handler(text=delete_category, state=UserModeState.ADMIN)
@@ -67,12 +67,12 @@ async def delete_category_handler(message: Message, state: FSMContext):
                 'DELETE FROM products WHERE tag IN (SELECT title FROM categories WHERE idx=?)', (idx,))
             db.query('DELETE FROM categories WHERE idx=?', (idx,))
             await bot.send_message(message.chat.id, 'Готово!', reply_markup=ReplyKeyboardRemove())
-            await UserModeState.ADMIN.set()
+            await state.set_state(UserModeState.ADMIN)
             await process_settings(message, state)
 
 @dp.message_handler(text=add_product, state=UserModeState.ADMIN)
 async def process_add_product(message: Message, state: FSMContext):
-    await ProductState.title.set()
+    await state.set_state(ProductState.title)
     markup = ReplyKeyboardMarkup(resize_keyboard=True)
     markup.add(cancel_message)
     await bot.send_message(message.chat.id, 'Название?', reply_markup=markup)
@@ -81,24 +81,24 @@ async def process_add_product(message: Message, state: FSMContext):
 async def process_cancel(message: Message, state: FSMContext):
     await bot.send_message(message.chat.id, 'Ок, отменено!', reply_markup=ReplyKeyboardRemove())
     await state.finish()
-    await UserModeState.ADMIN.set()
+    await state.set_state(UserModeState.ADMIN)
     await process_settings(message, state)
 
 @dp.message_handler(text=back_message, state=ProductState.title)
 async def process_title_back(message: Message, state: FSMContext):
-    await UserModeState.ADMIN.set()
+    await state.set_state(UserModeState.ADMIN)
     await process_settings(message, state)
 
 @dp.message_handler(state=ProductState.title)
 async def process_title(message: Message, state: FSMContext):
     async with state.proxy() as data:
         data['title'] = message.text
-    await ProductState.next()
+    await state.set_state(ProductState.next())
     await bot.send_message(message.chat.id, 'Описание?', reply_markup=back_markup())
 
 @dp.message_handler(text=back_message, state=ProductState.body)
 async def process_body_back(message: Message, state: FSMContext):
-    await ProductState.title.set()
+    await state.set_state(ProductState.title)
     async with state.proxy() as data:
         await bot.send_message(message.chat.id, f"Изменить название с <b>{data['title']}</b>?", reply_markup=back_markup())
 
@@ -106,7 +106,7 @@ async def process_body_back(message: Message, state: FSMContext):
 async def process_body(message: Message, state: FSMContext):
     async with state.proxy() as data:
         data['body'] = message.text
-    await ProductState.next()
+    await state.set_state(ProductState.next())
     await bot.send_message(message.chat.id, 'Фото?', reply_markup=back_markup())
 
 @dp.message_handler(content_types=ContentType.PHOTO, state=ProductState.image)
@@ -116,13 +116,13 @@ async def process_image_photo(message: Message, state: FSMContext):
     downloaded_file = (await bot.download_file(file_info.file_path)).read()
     async with state.proxy() as data:
         data['image'] = downloaded_file
-    await ProductState.next()
+    await state.set_state(ProductState.next())
     await bot.send_message(message.chat.id, 'Цена?', reply_markup=back_markup())
 
 @dp.message_handler(content_types=ContentType.TEXT, state=ProductState.image)
 async def process_image_url(message: Message, state: FSMContext):
     if message.text == back_message:
-        await ProductState.body.set()
+        await state.set_state(ProductState.body)
         async with state.proxy() as data:
             await bot.send_message(message.chat.id, f"Изменить описание с <b>{data['body']}</b>?", reply_markup=back_markup())
     else:
@@ -131,7 +131,7 @@ async def process_image_url(message: Message, state: FSMContext):
 @dp.message_handler(lambda message: not message.text.isdigit(), state=ProductState.price)
 async def process_price_invalid(message: Message, state: FSMContext):
     if message.text == back_message:
-        await ProductState.image.set()
+        await state.set_state(ProductState.image)
         async with state.proxy() as data:
             await bot.send_message(message.chat.id, "Другое изображение?", reply_markup=back_markup())
     else:
@@ -144,7 +144,7 @@ async def process_price(message: Message, state: FSMContext):
         title = data['title']
         body = data['body']
         price = data['price']
-        await ProductState.next()
+        await state.set_state(ProductState.next())
         text = f'<b>{title}</b>{body}Цена: {price} рублей.'
         markup = check_markup()
         await bot.send_photo(message.chat.id, photo=data['image'],
@@ -157,7 +157,7 @@ async def process_confirm_invalid(message: Message, state: FSMContext):
 
 @dp.message_handler(text=back_message, state=ProductState.confirm)
 async def process_confirm_back(message: Message, state: FSMContext):
-    await ProductState.price.set()
+    await state.set_state(ProductState.price)
     async with state.proxy() as data:
         await bot.send_message(message.chat.id, f"Изменить цену с <b>{data['price']}</b>?", reply_markup=back_markup())
 
@@ -175,7 +175,7 @@ async def process_confirm(message: Message, state: FSMContext):
         db.query('INSERT INTO products VALUES (?, ?, ?, ?, ?, ?)',
                  (idx, title, body, image, int(price), tag))
     await state.finish()
-    await UserModeState.ADMIN.set()
+    await state.set_state(UserModeState.ADMIN)
     await bot.send_message(message.chat.id, 'Готово!', reply_markup=ReplyKeyboardRemove())
     await process_settings(message, state)
 
