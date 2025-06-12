@@ -1,9 +1,7 @@
-from loader import dp
-
-from . import add
 from . import menu
-from . import notifications
+from . import add
 from . import orders
+from . import notifications
 from . import questions
 
-__all__ = ['dp']
+__all__ = ["menu", "add", "orders", "notifications", "questions"]

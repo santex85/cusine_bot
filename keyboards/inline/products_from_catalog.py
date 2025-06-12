@@ -1,15 +1,18 @@
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
-from aiogram.utils.callback_data import CallbackData
-from loader import db
+from aiogram.filters.callback_data import CallbackData
 
-product_cb = CallbackData('product', 'id', 'action')
+class CatalogProductCallbackFactory(CallbackData, prefix="catalog_product"):
+    id: str
+    action: str
 
-
-def product_markup(idx='', price=0):
-
-    global product_cb
-
-    markup = InlineKeyboardMarkup()
-    markup.add(InlineKeyboardButton(f'Добавить в корзину - {price}₽', callback_data=product_cb.new(id=idx, action='add')))
-
-    return markup
+def product_markup(idx, price):
+    return InlineKeyboardMarkup(
+        inline_keyboard=[
+            [
+                InlineKeyboardButton(
+                    text=f'🛒 Добавить в корзину ({price}₽)',
+                    callback_data=CatalogProductCallbackFactory(id=idx, action='add').pack()
+                )
+            ]
+        ]
+    )

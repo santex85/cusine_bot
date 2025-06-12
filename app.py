@@ -1,56 +1,92 @@
 import os
+import logging
 from dotenv import load_dotenv
 from aiohttp import web
+from aiogram import Bot, Dispatcher, types
+from loader import dp, bot, db
 
-load_dotenv()
+# --- ИМПОРТ ОБРАБОТЧИКОВ ---
+# Импортируем все роутеры из наших модулей
+from handlers.admin import menu as admin_menu, add as admin_add, orders, notifications, questions
+from handlers.user import menu as user_menu, catalog, cart, delivery_status, sos
+from handlers import start
 
-from data import config
-# Импортируем сам модуль loader
-import loader
-from aiogram import types
-import logging
+async def on_startup(bot_instance: Bot):
+    """
+    Выполняется при старте приложения. Устанавливает вебхук.
+    """
+    webhook_url = f"{os.getenv('APP_URL')}/{bot_instance.token}"
+    await bot_instance.set_webhook(
+        url=webhook_url,
+        allowed_updates=dp.resolve_used_update_types(),
+        drop_pending_updates=True
+    )
+    logging.info(f"Webhook has been set to: {webhook_url}")
 
-# Инициализация логирования
-logging.basicConfig(level=logging.INFO)
+async def on_shutdown(bot_instance: Bot):
+    """
+    Выполняется при остановке приложения. Удаляет вебхук.
+    """
+    logging.warning('Shutting down..')
+    await bot_instance.delete_webhook()
+    if db.conn:
+        db.conn.close()
+    logging.warning('Bot down')
 
-# --- ИНИЦИАЛИЗАЦИЯ ПЕРЕД ЗАПУСКОМ ---
-# Вызываем нашу функцию инициализации один раз
-loader.on_startup_init() 
-
-# --- РЕГИСТРАЦИЯ ОБРАБОТЧИКОВ ---
-# Это самая важная строка, которой не хватало.
-# Она заставляет выполниться код в handlers/__init__.py и зарегистрировать все хендлеры.
-import handlers
-
-# --- Обработчик вебхука ---
 async def handle_webhook(request):
-    """Принимает обновления от Telegram."""
-    # Используем loader.bot и loader.dp
+    """
+    Принимает и обрабатывает обновления от Telegram.
+    """
     url = str(request.url)
-    index = url.rfind('/')
-    token = url[index+1:]
+    token = url.split('/')[-1]
 
-    # Используем правильный атрибут _token
-    if token == loader.bot._token:
-        update = types.Update(**await request.json())
-        await loader.dp.process_update(update)
-        return web.Response()
+    if token == bot.token:
+        try:
+            update = types.Update(**await request.json())
+            await dp.feed_update(bot=bot, update=update)
+            return web.Response()
+        except Exception as e:
+            logging.error(f"Error processing update: {e}", exc_info=True)
+            return web.Response(status=500)
     else:
         return web.Response(status=403)
 
-# --- Health Check ---
 async def health_check(request):
-    """Отвечает на проверки работоспособности от хостинга."""
+    """Отвечает на проверки работоспособности."""
     return web.Response(text="OK")
 
-# --- Создание и запуск приложения ---
-app = web.Application()
-# Используем loader.bot._token для построения пути
-app.router.add_post(f'/{loader.bot._token}', handle_webhook)
-app.router.add_get('/health', health_check)
+def main():
+    """Основная функция для настройки и запуска приложения."""
+    load_dotenv()
 
-# Важно! При запуске в Cloud Run не нужно вызывать web.run_app.
-# Gunicorn сам запустит приложение. Этот блок остается для локальной отладки.
+    # --- РЕГИСТРАЦИЯ РОУТЕРОВ ---
+    dp.include_router(start.router)
+    # Админские роутеры
+    dp.include_router(admin_menu.router)
+    dp.include_router(admin_add.router)
+    dp.include_router(orders.router)
+    dp.include_router(notifications.router)
+    dp.include_router(questions.router)
+    # Пользовательские роутеры
+    dp.include_router(user_menu.router)
+    dp.include_router(catalog.router)
+    dp.include_router(cart.router)
+    dp.include_router(delivery_status.router)
+    dp.include_router(sos.router)
+
+    # Регистрируем функции жизненного цикла
+    dp.startup.register(on_startup)
+    dp.shutdown.register(on_shutdown)
+
+    # Создаем веб-приложение
+    app = web.Application()
+    app.router.add_post(f'/{bot.token}', handle_webhook)
+    app.router.add_get('/health', health_check)
+
+    return app
+
+# Создаем приложение для Gunicorn
+app = main()
+
 if __name__ == '__main__':
-    print("Запуск в режиме локальной отладки...")
     web.run_app(app, host="0.0.0.0", port=int(os.environ.get('PORT', 8080)))

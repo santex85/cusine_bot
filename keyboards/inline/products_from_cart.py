@@ -1,16 +1,20 @@
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
-from aiogram.utils.callback_data import CallbackData
+from aiogram.filters.callback_data import CallbackData
 
-product_cb = CallbackData('product', 'id', 'action')
+class CartProductCallbackFactory(CallbackData, prefix="cart_product"):
+    id: str
+    action: str
 
 def product_markup(idx, count):
-
-    global product_cb
-
-    markup = InlineKeyboardMarkup()
-    back_btn = InlineKeyboardButton('⬅️', callback_data=product_cb.new(id=idx, action='decrease'))
-    count_btn = InlineKeyboardButton(count, callback_data=product_cb.new(id=idx, action='count'))
-    next_btn = InlineKeyboardButton('➡️', callback_data=product_cb.new(id=idx, action='increase'))
-    markup.row(back_btn, count_btn, next_btn)
-
-    return markup
+    return InlineKeyboardMarkup(
+        inline_keyboard=[
+            [
+                InlineKeyboardButton(text='-', callback_data=CartProductCallbackFactory(id=idx, action='decrease').pack()),
+                InlineKeyboardButton(text=f'{count} шт.', callback_data='count_ignore'),
+                InlineKeyboardButton(text='+', callback_data=CartProductCallbackFactory(id=idx, action='increase').pack()),
+            ],
+            [
+                InlineKeyboardButton(text='🗑️ Удалить', callback_data=CartProductCallbackFactory(id=idx, action='delete').pack())
+            ]
+        ]
+    )
