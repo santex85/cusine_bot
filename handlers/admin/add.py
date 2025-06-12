@@ -8,6 +8,7 @@ from handlers.admin.menu import settings
 from loader import dp, db, bot
 from hashlib import md5
 from states.user_mode_state import UserModeState
+from aiogram.utils.exceptions import MessageToDeleteNotFound
 
 category_cb = CallbackData('category', 'id', 'action')
 product_cb = CallbackData('product', 'id', 'action')
@@ -31,14 +32,20 @@ async def category_callback_handler(query: CallbackQuery, callback_data: dict, s
     products = db.fetchall('''SELECT * FROM products product
     WHERE product.tag = (SELECT title FROM categories WHERE idx=?)''',
                            (category_idx,))
-    await bot.delete_message(query.message.chat.id, query.message.message_id)
+    try:
+        await bot.delete_message(query.message.chat.id, query.message.message_id)
+    except MessageToDeleteNotFound:
+        pass
     await query.answer('Все добавленные товары в эту категорию.')
     await state.update_data(category_index=category_idx)
     await show_products(query.message, products, category_idx)
 
 @dp.callback_query_handler(text='add_category', state=UserModeState.ADMIN)
 async def add_category_callback_handler(query: CallbackQuery, state: FSMContext):
-    await bot.delete_message(query.message.chat.id, query.message.message_id)
+    try:
+        await bot.delete_message(query.message.chat.id, query.message.message_id)
+    except MessageToDeleteNotFound:
+        pass
     await bot.send_message(query.message.chat.id, 'Название категории?')
     await CategoryState.title.set()
 
@@ -177,7 +184,10 @@ async def delete_product_callback_handler(query: CallbackQuery, callback_data: d
     product_idx = callback_data['id']
     db.query('DELETE FROM products WHERE idx=?', (product_idx,))
     await query.answer('Удалено!')
-    await bot.delete_message(query.message.chat.id, query.message.message_id)
+    try:
+        await bot.delete_message(query.message.chat.id, query.message.message_id)
+    except MessageToDeleteNotFound:
+        pass
 
 async def show_products(m: Message, products, category_idx):
     await bot.send_chat_action(m.chat.id, ChatActions.TYPING)
