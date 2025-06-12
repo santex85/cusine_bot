@@ -36,7 +36,7 @@ async def category_callback_handler(query: CallbackQuery, callback_data: dict, s
         await bot.delete_message(query.message.chat.id, query.message.message_id)
     except MessageToDeleteNotFound:
         pass
-    await query.answer('Все добавленные товары в эту категорию.')
+    await bot.answer_callback_query(query.id, 'Все добавленные товары в эту категорию.')
     await state.update_data(category_index=category_idx)
     await show_products(query.message, products, category_idx)
 
@@ -183,7 +183,7 @@ async def process_confirm(message: Message, state: FSMContext):
 async def delete_product_callback_handler(query: CallbackQuery, callback_data: dict, state: FSMContext):
     product_idx = callback_data['id']
     db.query('DELETE FROM products WHERE idx=?', (product_idx,))
-    await query.answer('Удалено!')
+    await bot.answer_callback_query(query.id, 'Удалено!')
     try:
         await bot.delete_message(query.message.chat.id, query.message.message_id)
     except MessageToDeleteNotFound:
