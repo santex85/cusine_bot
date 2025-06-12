@@ -8,7 +8,7 @@ from loader import dp, bot, db
 # --- ИМПОРТ ОБРАБОТЧИКОВ ---
 # Импортируем все роутеры из наших модулей
 from handlers.admin import menu as admin_menu, add as admin_add, orders, notifications, questions
-from handlers.user import menu as user_menu, catalog, cart, delivery_status, sos
+from handlers.user import catalog, cart, delivery_status, sos
 from handlers import start
 
 async def on_startup(bot_instance: Bot):
@@ -68,7 +68,6 @@ def main():
     dp.include_router(notifications.router)
     dp.include_router(questions.router)
     # Пользовательские роутеры
-    dp.include_router(user_menu.router)
     dp.include_router(catalog.router)
     dp.include_router(cart.router)
     dp.include_router(delivery_status.router)

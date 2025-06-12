@@ -24,6 +24,7 @@ class DatabaseManager(object):
         self.query('CREATE TABLE IF NOT EXISTS categories (idx text, title text)')
         self.query('CREATE TABLE IF NOT EXISTS wallet (cid int, balance real)')
         self.query('CREATE TABLE IF NOT EXISTS questions (cid int, question text)')
+        self.query('CREATE TABLE IF NOT EXISTS users (cid INTEGER PRIMARY KEY)')
         
     def query(self, arg, values=None):
         """For executing queries that modify the database (INSERT, UPDATE, DELETE)."""
