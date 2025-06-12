@@ -9,7 +9,8 @@ from states.user_mode_state import UserModeState
 async def process_orders(message: Message, state: FSMContext):
     logging.info("Администратор запросил список заказов.")
     try:
-        orders_data = db.fetchall('SELECT id, cid, usr_name, usr_address, products, status FROM orders')
+        # Заменяем 'id' на 'rowid'
+        orders_data = db.fetchall('SELECT rowid, cid, usr_name, usr_address, products, status FROM orders')
         logging.info(f"Получено {len(orders_data)} заказов из БД.")
     except Exception as e:
         logging.error(f"Ошибка при получении заказов из БД: {e}")
@@ -33,7 +34,7 @@ async def order_answer(message: Message, orders_data: list, product_dict: dict):
         logging.info(f"Обрабатывается заказ из БД: {order}")
         try:
             order_id, cid, usr_name, usr_address, products_string, order_status = order
-            res = f'Заказ №<b>{order_id}</b>'
+            res = f'Заказ №<b>{order_id}</b> '
             res += f'Клиент: {usr_name if usr_name is not None else "Не указан"} (<a href="tg://user?id={cid}">{cid if cid is not None else "Не указан"}</a>)'
             res += f'Адрес: {usr_address if usr_address is not None else "Не указан"}'
             total_order_price = 0
@@ -53,7 +54,7 @@ async def order_answer(message: Message, orders_data: list, product_dict: dict):
                             product_name = product_info.get('title', 'Неизвестный товар')
                             product_price = product_info.get('price', 0)
                             position_total = quantity * product_price
-                            res += f'{product_name}: {quantity} шт. по {product_price} руб. (всего: {position_total} руб.)'
+                            res += f'• {product_name}: {quantity} шт. по {product_price} руб. (всего: {position_total} руб.)'
                             total_order_price += position_total
                         except (ValueError, IndexError) as e:
                             logging.error(f"Ошибка парсинга товара '{item}' в заказе {order_id}: {e}")
@@ -95,7 +96,7 @@ async def process_status_done(callback_query: CallbackQuery, state: FSMContext):
         await callback_query.answer("Ошибка: Неверный формат данных заказа.", show_alert=True)
         return
     try:
-        db.query('UPDATE orders SET status = ? WHERE id = ?', ('выполнен', order_id))
+        db.query('UPDATE orders SET status = ? WHERE rowid = ?', ('выполнен', order_id))
         logging.info(f"Статус заказа {order_id} успешно изменен на 'выполнен'.")
         await callback_query.answer("Статус заказа изменен на 'выполнен'", show_alert=False)
     except Exception as e:
@@ -113,10 +114,10 @@ async def process_delete_order(callback_query: CallbackQuery, state: FSMContext)
         await callback_query.answer("Ошибка: Неверный формат данных заказа.", show_alert=True)
         return
     try:
-        db.query('DELETE FROM orders WHERE id = ?', (order_id,))
+        db.query('DELETE FROM orders WHERE rowid = ?', (order_id,))
         logging.info(f"Заказ {order_id} успешно удален из БД.")
         await callback_query.answer(f"Заказ {order_id} удален", show_alert=False)
-        await callback_query.message.delete()
+        await bot.delete_message(callback_query.message.chat.id, callback_query.message.message_id)
         logging.info(f"Сообщение для заказа {order_id} удалено из чата.")
     except Exception as e:
         logging.error(f"Ошибка при удалении заказа {order_id} из БД: {e}")
